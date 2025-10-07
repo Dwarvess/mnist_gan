@@ -1,33 +1,34 @@
 # mnist_inpainting_fixed.py
-import random
-import torch
-import torch.nn as nn
-import torch.optim as optim
-from torchvision import datasets, transforms
-from torch.utils.data import DataLoader
-import matplotlib.pyplot as plt
-from tqdm import tqdm
+# Kütüphanelerin kurulacağı kısım
+import random #random modülü eklendi
+import torch # PyTorch kütüphanesi
+import torch.nn as nn # Sinir ağı modülleri
+import torch.optim as optim # Optimizasyon algoritmaları
+from torchvision import datasets, transforms # Görüntü işleme
+from torch.utils.data import DataLoader # Veri yükleyici
+import matplotlib.pyplot as plt # Görselleştirme
+from tqdm import tqdm # İlerleme çubuğu
 
-# ---------------------- AYARLAR ----------------------
+# ---------------------- AYARLAR(Parametreler) ----------------------
 # TRAIN_MASK_MODE options: "horizontal", "vertical", "random_square", "mixed"
-TRAIN_MASK_MODE = "vertical"
+TRAIN_MASK_MODE = "vertical" #burada maskenin türünü belirliyoruz
 TRAIN_SQUARE_SIZE = 7       # sadece random_square için
 TRAIN_LINE_THICKNESS = 7    # yatay/dikey çizgi kalınlığı
-BATCH_SIZE = 128
-NUM_EPOCHS = 100
-LR = 1e-4
-LAMBDA_RECON = 500
+BATCH_SIZE = 128 # eğitimde kullanılacak batch size. Batch size, eğitim sırasında verilerden kaç tanesinin bir kerede modele verileceğini gösterir.
+NUM_EPOCHS = 100 # eğitimde kullanılacak epoch sayısı. Epoch, tüm eğitim veri setinin modele bir kez sunulmasıdır.
+LR = 1e-4 # öğrenme hızı (learning rate)
+LAMBDA_RECON = 500 # reconstruction loss için ağırlık
 # -----------------------------------------------------
 
 # reproducibility (opsiyonel)
-random.seed(42)
+random.seed(42) 
 torch.manual_seed(42)
 
 # ---------- 1. Veri Hazırlama ----------
 transform = transforms.Compose([transforms.ToTensor()])
 train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-
+#MNIST veri setini tensöre çevirmemizin nedeni, PyTorch modellerinin veriyi tensör formatında beklemesidir.
 
 # ---------- 1b. Maske fonksiyonu (eğitimde kullanılacak) ----------
 def add_mask(image):
@@ -146,7 +147,7 @@ D = Discriminator().to(device)
 # ----- GPU kontrol -----
 print("Generator device:", next(G.parameters()).device)
 print("Discriminator device:", next(D.parameters()).device)
-
+#burada modelin hangi cihazda (CPU veya GPU) çalıştığını kontrol ediyoruz.
 criterion_GAN = nn.BCELoss()
 criterion_recon = nn.L1Loss()
 optimizer_G = optim.Adam(G.parameters(), lr=LR )
