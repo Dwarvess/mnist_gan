@@ -16,9 +16,9 @@ TRAIN_MASK_MODE = "mixed"
 TRAIN_SQUARE_SIZE = 7
 TRAIN_LINE_THICKNESS = 7
 BATCH_SIZE = 64
-NUM_EPOCHS = 1000
-LR = 5e-5
-LAMBDA_RECON = 1000
+NUM_EPOCHS = 500
+LR = 1e-5
+LAMBDA_RECON = 100
 MODEL_PATH = "generator_trained.pth"
 CONTROL_MODEL_FILE= 1 # 1: use existing model, 0: delete and train again
 # ---------------------- CONTROL ----------------------
@@ -177,6 +177,7 @@ def test_custom_image(image_path):
 # ---------- OPERATING ----------
 # Try with your handwriting:
 test_custom_image(r"D:\kods\testdata.png") #Load your own data
+
 
 
 
