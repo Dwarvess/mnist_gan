@@ -1,7 +1,7 @@
 # =============================================================================
 # MNIST Handwritten Digit Inpainting using a GAN
 #
-# Author: [Adını Buraya Yaz]
+# Author: [Orhan TURGUT]
 # Date: 2025-10-15
 # Description: This script trains a Generative Adversarial Network (GAN)
 #              with a U-Net based generator and a CNN based discriminator
@@ -197,3 +197,4 @@ if __name__ == "__main__":
     else:
         print("\nℹ️ To test with your own image, run the script with the --image flag.")
         print("Example: python train.py --image path/to/your/image.png")
+
