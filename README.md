@@ -30,10 +30,15 @@ To run this project on your local machine, you can follow the steps below.
     ```
 
 4.  **Test with the Pre-trained Model**
-    The repository includes the pre-trained champion model (`generator_model5.pth`). To test it with your own masked image, use the `--image` flag in the terminal:
+    The repository includes a pre-trained model (`generator_model5.pth`) and a folder of sample masked images (`/test_images`) for easy testing.
+
+    You can test the model with any of the provided samples. For example, to test with `5_sayisi.png`, use the `--image` flag in the terminal:
+    
     ```bash
-    python train.py --image path/to/your/image.png
+    python train.py --image test_images/5_sayisi.png
     ```
+
+    Simply replace `5_sayisi.png` with the filename of any other image located in the `/test_images` directory to see different results. You can also test the model with your own custom images by providing the correct path.
 
 5.  **Train the Model (Optional)**
     To train the model from scratch with the optimal parameters, set `CONTROL_MODEL_FILE = 0` inside the `train.py` script and then run:
