@@ -5,6 +5,13 @@ It was developed as a preparatory study for my upcoming graduation project, allo
 The core idea is to train a U-Net based generator to intelligently fill in missing or corrupted parts of an image, while a discriminator network pushes it to create
 realistic and coherent results. This repository serves as both a learning exercise and a practical implementation of modern computer vision concepts.Below, I will 
 guide you through the necessary steps to set up the environment, train the model, and test it with your own images.
+## 🛠️ Technologies Used
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)
+![NumPy](https://img.shields.io/badge/Numpy-777BB4?style=for-the-badge&logo=numpy&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-%23ffffff.svg?style=for-the-badge&logo=Matplotlib&logoColor=black)
+
+
 
 TRAIN_MASK_MODE = "mixed"
 This parameter determines the type of mask applied to images during training. Available options include "horizontal", "vertical", "random_square", and "mixed". 
