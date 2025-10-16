@@ -1,4 +1,3 @@
-# mnist_inpainting_final.py
 import random
 import os
 import torch
@@ -16,9 +15,9 @@ TRAIN_MASK_MODE = "mixed"
 TRAIN_SQUARE_SIZE = 7
 TRAIN_LINE_THICKNESS = 7
 BATCH_SIZE = 64
-NUM_EPOCHS = 500
-LR = 1e-5
-LAMBDA_RECON = 100
+NUM_EPOCHS = 750
+LR = 5e-5
+LAMBDA_RECON = 150
 MODEL_PATH = "generator_trained.pth"
 CONTROL_MODEL_FILE= 1 # 1: use existing model, 0: delete and train again
 # ---------------------- CONTROL ----------------------
@@ -36,7 +35,7 @@ transform = transforms.Compose([transforms.ToTensor()])
 train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
 dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
-# ---------- MASK FUNCTİON ----------
+# ---------- MASK FUNCTION ----------
 def add_mask(image):
     c, h, w = image.shape
     img = image.clone()
@@ -80,26 +79,39 @@ def add_mask(image):
     return img, mask
 
 
-# ---------- MODELS ----------
+# ---------- MODELS (UPDATED WITH BATCHNORM) ----------
 class UNetGenerator(nn.Module):
     def __init__(self):
         super().__init__()
+        # Encoder
         self.enc1 = nn.Conv2d(1, 64, 4, stride=2, padding=1)
         self.enc2 = nn.Conv2d(64, 128, 4, stride=2, padding=1)
+        self.bn_e2 = nn.BatchNorm2d(128)
         self.enc3 = nn.Conv2d(128, 256, 3, stride=1, padding=1)
+        self.bn_e3 = nn.BatchNorm2d(256)
+        
         self.relu = nn.ReLU()
+        
+        # Decoder
         self.dec1 = nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1)
-        self.dec2 = nn.ConvTranspose2d(128+64, 64, 4, stride=2, padding=1)
-        self.dec3 = nn.Conv2d(64, 1, 3, stride=1, padding=1)
+        self.bn_d1 = nn.BatchNorm2d(128)
+        self.dec2 = nn.ConvTranspose2d(128 + 64, 64, 4, stride=2, padding=1)
+        self.bn_d2 = nn.BatchNorm2d(64)
+        self.dec3 = nn.Conv2d(64, 1, 3, stride=1, padding=1) # Batch norm is not usually applied to the last layer
+        
         self.tanh = nn.Tanh()
+
     def forward(self, x):
-        e1 = self.relu(self.enc1(x))
-        e2 = self.relu(self.enc2(e1))
-        e3 = self.relu(self.enc3(e2))
-        d1 = self.relu(self.dec1(e3))
-        d1_cat = torch.cat([d1, e1], dim=1)
-        d2 = self.relu(self.dec2(d1_cat))
-        out = self.tanh(self.dec3(d2))
+        # Encoder
+        e1 = self.relu(self.enc1(x)) # Batch norm is not usually applied to the first layer
+        e2 = self.relu(self.bn_e2(self.enc2(e1)))
+        e3 = self.relu(self.bn_e3(self.enc3(e2)))
+        
+        # Decoder
+        d1 = self.relu(self.bn_d1(self.dec1(e3)))
+        d1_cat = torch.cat([d1, e1], dim=1) # Skip connection
+        d2 = self.relu(self.bn_d2(self.dec2(d1_cat)))
+        out = self.tanh(self.dec3(d2)) # Output activation
         return out
 
 class Discriminator(nn.Module):
@@ -107,9 +119,12 @@ class Discriminator(nn.Module):
         super().__init__()
         self.model = nn.Sequential(
             nn.Conv2d(1, 64, 4, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
+            nn.LeakyReLU(0.2, inplace=True),
+
             nn.Conv2d(64, 128, 4, stride=2, padding=1),
-            nn.LeakyReLU(0.2),
+            nn.BatchNorm2d(128), # BatchNorm Added
+            nn.LeakyReLU(0.2, inplace=True),
+            
             nn.Flatten(),
             nn.Linear(128*7*7, 1),
             nn.Sigmoid()
@@ -117,17 +132,19 @@ class Discriminator(nn.Module):
     def forward(self, x):
         return self.model(x)
 
-# ---------- TRAİN AND UPLOAD ----------
+# ---------- TRAIN AND UPLOAD ----------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 G = UNetGenerator().to(device)
 D = Discriminator().to(device)
 
 criterion_GAN = nn.BCELoss()
 criterion_recon = nn.L1Loss()
-optimizer_G = optim.Adam(G.parameters(), lr=LR)
-optimizer_D = optim.Adam(D.parameters(), lr=LR)
+# Optimizers updated with betas parameter for more stable GAN training
+optimizer_G = optim.Adam(G.parameters(), lr=LR, betas=(0.5, 0.999))
+optimizer_D = optim.Adam(D.parameters(), lr=LR, betas=(0.5, 0.999))
 
-if os.path.exists(MODEL_PATH):
+
+if os.path.exists(MODEL_PATH) and CONTROL_MODEL_FILE == 1:
     G.load_state_dict(torch.load(MODEL_PATH, map_location=device))
     G.eval()
     print("✅ The trained model has been loaded and will not be trained again.")
@@ -144,6 +161,7 @@ else:
             real_labels = torch.ones(images.size(0),1).to(device)
             fake_labels = torch.zeros(images.size(0),1).to(device)
             
+            # Train Discriminator
             D.zero_grad()
             outputs_real = D(images)
             outputs_fake = D(G(masked_images).detach())
@@ -151,6 +169,7 @@ else:
             loss_D.backward()
             optimizer_D.step()
             
+            # Train Generator
             G.zero_grad()
             fake_images = G(masked_images)
             loss_recon_masked = criterion_recon(fake_images * (1-masks), images * (1-masks))
@@ -160,24 +179,28 @@ else:
             
             loop.set_description(f"Epoch [{epoch+1}/{NUM_EPOCHS}]")
             loop.set_postfix(D_loss=loss_D.item(), G_loss=loss_G.item())
+            
     torch.save(G.state_dict(), MODEL_PATH)
     print("✅ Model training completed and saved")
+    G.eval() # Switch to evaluation mode after training
 
-# ---------- TEST WİTH YOUR DATA----------
+# ---------- TEST WITH YOUR DATA----------
 def test_custom_image(image_path):
-    img = Image.open(image_path).convert('L').resize((28,28))
+    try:
+        img = Image.open(image_path).convert('L').resize((28,28))
+    except FileNotFoundError:
+        print(f"\nERROR: Test image not found at '{image_path}'. Skipping this test.")
+        return
+        
     tensor = transforms.ToTensor()(img).unsqueeze(0).to(device)
     with torch.no_grad():
         completed = G(tensor).cpu().squeeze()
     plt.figure(figsize=(6,3))
-    plt.subplot(1,2,1); plt.imshow(img, cmap='gray'); plt.title("Girdi (Your masked number)"); plt.axis("off")
-    plt.subplot(1,2,2); plt.imshow(completed, cmap='gray'); plt.title("The completed version of the model"); plt.axis("off")
+    plt.subplot(1,2,1); plt.imshow(img, cmap='gray'); plt.title("Input (Your masked number)"); plt.axis("off")
+    plt.subplot(1,2,2); plt.imshow(completed, cmap='gray'); plt.title("Model's Completed Version"); plt.axis("off")
     plt.show()
 
 # ---------- OPERATING ----------
 # Try with your handwriting:
+# The code will run this part after training is complete or if a pre-trained model is loaded.
 test_custom_image(r"D:\kods\testdata.png") #Load your own data
-
-
-
-
