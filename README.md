@@ -16,12 +16,12 @@ To run this project on your local machine, you can follow the steps below.
 
 1.  **Clone the Repository**
     ```bash
-    git clone [https://github.com/Dwarvess/mnist_gan.git](https://github.com/Dwarvess/mnist_gan.git)
+    git clone (https://github.com/Dwarvess/mnist_gan.git)
     ```
 
 2.  **Navigate to the Project Directory**
     ```bash
-    cd train.py
+    cd mnist_gan
     ```
 
 3.  **Install Dependencies**
