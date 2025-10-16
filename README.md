@@ -20,7 +20,3 @@ This script includes several parameters that can be adjusted to change the train
 * **`LR` (Learning Rate)**: Controls the step size of the optimizer.
 * **`LAMBDA_RECON`**: A crucial coefficient that balances the GAN Loss (realism) and the Reconstruction Loss (faithfulness).
 * **`CONTROL_MODEL_FILE`**: A flag to either load a pre-trained model (1) or train from scratch (0).
-If set to 0, the script will delete any existing model file and restart the training process.
-
-test_custom_image(r"D:\cods\Data.png")
-This is the function call to test the trained model with your own custom image. You should change the file path to point to the location of your test image.
