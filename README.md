@@ -50,4 +50,12 @@ To run this project on your local machine, you can follow the steps below.
 
 The development process involved several iterations to find the optimal balance between visual quality (sharpness) and semantic correctness (not misinterpreting digits). The table below summarizes the key models developed.
 
-| Model Name | Configuration | Stre
+### Analysis of Model Training Graphs
+
+| Model Name | Generator Graph Analysis | Discriminator Graph Analysis | Technical Verdict |
+| :--- | :--- | :--- | :--- |
+| **Model 1** | **Healthy Generalization:** Training and validation losses track each other well. No overfitting. | **Hyper-Competitive/Unstable:** Very noisy and volatile. A healthy conflict exists, but the balance is delicate. | **Good but Risky** |
+| **Model 2** | **Obvious Overfitting:** The validation loss plateaus very early. The model has stopped generalizing. | **Overly Stable:** The competition settles into an equilibrium too early, which can indicate that learning has slowed. | **Technically Flawed** |
+| **Model 3 & 4**| **Early Overfitting:** The validation loss plateaus even earlier. The generalization ability is very weak. | **Stable Equilibrium:** Similar to Model 2, the competition is at a low level. | **Technically Flawed** |
+| **🏆 Model 5 🏆**| **BEST GENERALIZATION:** The validation loss tracks the training loss for the longest duration. A slight tendency to overfit is present but under control. | **IDEAL COMPETITION:** Neither too unstable nor too stagnant. A healthy and stable equilibrium is present. | **TECHNICALLY SUPERIOR**|
+| **Model 6** | **Unstable Overfitting:** The validation loss not only plateaus but is also very noisy and unstable. | **Unbalanced Competition:** A significant inconsistency exists between training and validation losses. The balance is broken. | **Technically Failed** |
